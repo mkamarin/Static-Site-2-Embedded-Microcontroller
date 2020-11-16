@@ -62,7 +62,7 @@ void postUpdateProcess(AsyncWebServerRequest *request, const String& filename, s
     if(!index)
     {
         Serial.setDebugOutput(true);
-        Serial.printf("\n[BEGIN] Update: '%s', index %d, len %d, %s\n", filename.c_str(), index, len, (final ? "DONE" : ""));
+        Serial.printf("\\n[BEGIN] Update: '%s', index %d, len %d, %s\\n", filename.c_str(), index, len, (final ? "DONE" : ""));
         cnt = 0;
         if (!Update.begin()) //start with max available size
         {
@@ -70,7 +70,7 @@ void postUpdateProcess(AsyncWebServerRequest *request, const String& filename, s
         }
     }
 
-    if(((++cnt)%50)==0)Serial.printf("(%d, %d)\n", index, len); else Serial.print(".");
+    if(((++cnt)%50)==0)Serial.printf("(%d, %d)\\n", index, len); else Serial.print(".");
 
     if (Update.write(data, len) != len)
     {
@@ -79,12 +79,12 @@ void postUpdateProcess(AsyncWebServerRequest *request, const String& filename, s
 
     if(final)
     {
-        Serial.printf("(%d, %d)\n[END]\n", index, len);
+        Serial.printf("(%d, %d)\\n[END]\\n", index, len);
         if (Update.end(true)) //true to set the size to the current progress
         {
             if(Update.hasError())
             {
-                Serial.printf("Update Success: %u\nRebooting...\n", index+len);
+                Serial.printf("Update Success: %u\\nRebooting...\\n", index+len);
             } 
             else 
             {
@@ -131,7 +131,7 @@ void postUpdateProcess(void)
     {
         case UPLOAD_FILE_START: 
             cnt = 0;
-            Serial.printf("[BEGIN] Update: '%s'\n", upload.filename.c_str());
+            Serial.printf("[BEGIN] Update: '%s'\\n", upload.filename.c_str());
             if (!Update.begin()) //start with max available size
             {
                 Update.printError(Serial);
@@ -148,10 +148,10 @@ void postUpdateProcess(void)
             break;
 
         case UPLOAD_FILE_END: 
-            Serial.printf("\n[END]\n");
+            Serial.printf("\\n[END]\\n");
             if (Update.end(true)) //true to set the size to the current progress
             {
-                Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+                Serial.printf("Update Success: %u\\nRebooting...\\n", upload.totalSize);
             } 
             else 
             {
@@ -161,7 +161,7 @@ void postUpdateProcess(void)
             break;
 
         default:
-            Serial.printf("Update Failed Unexpectedly (likely broken connection): status=%d\n", upload.status);
+            Serial.printf("Update Failed Unexpectedly (likely broken connection): status=%d\\n", upload.status);
     }
 }
 
@@ -189,7 +189,7 @@ void setup()
 {
   Serial.begin(115200);
 
-  Serial.printf("\n=======\n\nSTART connecting to %s\n", ssid);
+  Serial.printf("\\n=======\\n\\nSTART connecting to %s\\n", ssid);
   WiFi.begin(ssid, password);
  
   Serial.println("Connecting to WiFi.");
@@ -200,11 +200,16 @@ void setup()
   } 
 
   String IP = WiFi.localIP().toString();
-  Serial.printf("Connected to: %s\n IP address: %s\n Host name:  %s\n",
+  Serial.printf("Connected to: %s\\n IP address: %s\\n Host name:  %s\\n",
       ssid, IP.c_str(), WiFi.getHostname());
 
 :::for files  
+:::if NOT P404Html
   server.on("[:::HtmlPath:::]", HTTP_GET, &get[:::Name:::]); 
+:::fi
+:::if P404Html
+  server.onNotFound(&get[:::Name:::]); 
+:::fi
 :::end
 :::if OTA
   server.on("/update", HTTP_GET, &getOTA); 

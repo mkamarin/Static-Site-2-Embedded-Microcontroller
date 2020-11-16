@@ -25,48 +25,104 @@ def error(*args, **kwargs):
 
 # This is internal template that guides the generation of the sample code
 template = '''
-START FILE
-Arguments:
+/****************************************
+ * Program arguments:
+ * Path='[:::Path:::]'
+ * Output='[:::Output:::]'
+ * Use='[:::Use:::]'
+ * Write='[:::Write:::]'
+ * Include='[:::Include:::]'
+ * If='[:::If:::]'
+ * Type='[:::Type:::]'
+ **************************************** 
+ * START Configuration Section
+ ****************************************/
 
-Path=[:::Path:::]
-Output=[:::Output:::]
-Use=[:::Use:::]
-Write=[:::Write:::]
-Include=[:::Include:::]
-If=[:::If:::]
-Type=[:::Type:::]
-done
+// Define USE_ASYNC if you want to use ESPAsyncWebServer.h instead of WebServer.h
+//#define USE_ASYNC
 
-lets do includes
+// These are the WiFi credential for your router
+const char* ssid = "";
+const char* password = "";
+
+/****************************************
+ * END Configuration Section
+ ****************************************/
+
+#include <WiFi.h>
+#ifdef USE_ASYNC
+#include <ESPAsyncWebServer.h> // From: https://github.com/me-no-dev/ESPAsyncWebServer
+#else
+#include <WebServer.h>
+#endif
+
 :::include
 
-Now let do if OTA
-:::if OTA
-inside OTA 1
-inside OTA 2
-inside OTA  Now let do if BETA
-:::if    BETA
-Inside BETA
-Let now do a for
-:::for
-Inside for
-:::end
-after for
-:::fi
-Inside OTA again
-:::fi
+#ifdef USE_ASYNC
+AsyncWebServer server(80);
+#else
+WebServer server(80);
+#endif
 
-:::for
-Inside for a
-Now let do if OTA
-:::if OTA
-In OTA
-:::fi
-  server.on("[:::HtmlPath:::]"; HTTP_GET; &get[:::Name:::]); 
-  request->send_P(200; "[:::MIME:::]"; [:::Page:::]);
+int cnt(0);
+
+#ifdef USE_ASYNC
+
+:::for files  
+void get[:::Name:::](AsyncWebServerRequest *request)
+{
+    request->send_P(200, "[:::MIME:::]", [:::Page:::]);
+}
 :::end
 
-END of FILE
+#else // Non-Async
+
+:::for files  
+void get[:::Name:::](void)
+{
+    server.sendHeader("Connection", "close");
+    server.send_P(200, "[:::MIME:::]", [:::Page:::]);
+}
+:::end
+
+#endif
+
+void setup() 
+{
+  Serial.begin(115200);
+
+  Serial.printf("\\n=======\\n\\nSTART connecting to %s\\n", ssid);
+  WiFi.begin(ssid, password);
+ 
+  Serial.println("Connecting to WiFi.");
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    delay(500);
+    Serial.print(".");
+  } 
+
+  String IP = WiFi.localIP().toString();
+  Serial.printf("Connected to: %s\\n IP address: %s\\n Host name:  %s\\n",
+      ssid, IP.c_str(), WiFi.getHostname());
+
+:::for files  
+:::if NOT P404Html
+  server.on("[:::HtmlPath:::]", HTTP_GET, &get[:::Name:::]); 
+:::fi
+:::if P404Html
+  server.onNotFound(&get[:::Name:::]); 
+:::fi
+:::end
+  server.begin();
+}
+
+void loop()
+{
+#ifndef USE_ASYNC
+  server.handleClient();
+  yield(1);
+#endif
+}
 '''
 
 def do_cmd(cmd, frame, argDict):
@@ -93,11 +149,7 @@ def do_cmd(cmd, frame, argDict):
     if cmd == ":MIME:":
         return frame['mime']
     elif cmd == ":Name:":
-        nm = frame['vname'].split('_')
-        name = ""
-        for n in nm:
-            name += n.capitalize()
-        return name
+        return frame['vname']
     elif cmd == ":Page:":
         if argDict['arType'] in ['s', 'm']:
             return frame['vname']
@@ -187,7 +239,7 @@ def execfor(line, flTemplate, flOutput, argDict):
         while True:
             line = flTemplate.readline()
             if not line:
-                error("Template EOF within an :::if block")
+                error("Template EOF within an :::for block")
                 return
 
             if line.startswith(":::end"):
@@ -274,6 +326,48 @@ def skipif(line, flTemplate, flOutput, argDict, frame):
 
 
 
+def evalif(tokens , vars):
+    """evaluates an if condition (boolean expression) using eval()
+
+    Parameters
+    ----------
+    tokens: list
+        List of tokens in the condition
+    vars : List
+        List of defined variables (either by --if argument or internal)
+
+    Returns
+    -------
+    True or False
+    """
+
+    if not tokens:
+        return False
+
+    # This is inefficient but we should not have many complicated :::if statements
+    tmp = ' '.join(tokens).replace('(', ' ( ').replace(')', ' ) ')
+    tokens = tmp.rstrip().split(' ')
+    while('' in tokens):
+        tokens.remove('')
+
+    exp = ""
+    for tkn in tokens:
+        if (tkn in ['NOT', 'AND', 'OR']) or (tkn in ['(',')']):
+            exp += tkn.lower() + ' '
+        elif tkn in vars:
+            exp += "True "
+        else:
+            exp += "False "
+
+    try:
+        ret = eval(exp)
+    except:
+        error("Invalid :::if condition")
+        ret = False
+
+    return ret
+
+
 def execute(line, flTemplate, flOutput, argDict, frame):
     """Executes a command in the template file (line starting with :::
 
@@ -308,8 +402,11 @@ def execute(line, flTemplate, flOutput, argDict, frame):
         elif argDict['arType'] == "s": # Single header
             flOutput.write('#include "' + argDict['arInclude'] + '"\n')
     elif tokens[0] == ":::if":
-        vbprint("Processing IF with",argDict['arIf'])
-        if (len(tokens) > 0) and tokens[1] in argDict['arIf']:
+        vares = argDict['arIf'].copy()
+        if frame:
+            vares.append(frame['vname'])
+        vbprint("Processing :::if with vars",vares,"and tokens",tokens)
+        if evalif(tokens[1:],vares):
             execif(line, flTemplate, flOutput, argDict, frame)
         else:
             skipif(line, flTemplate, flOutput, argDict, frame)
@@ -337,7 +434,7 @@ def add_header(fl, fn):
             os.path.basename(sys.argv[0]) + " on " +  str(datetime.datetime.today()) + "\n//")
 
 
-def generate(argDict):
+def generate(argDict,extraIf):
     """Generate an example file for Arduino IDE
 
     Parameters
@@ -352,6 +449,7 @@ def generate(argDict):
 
     fnName = os.path.join(argDict['arOutput'], argDict['arOutput'] + ".ino")
     vbprint("\nGENERATION phase (into '", fnName,"')",sep="")
+    print("Full set of defined variables: ", ', '.join(argDict['arIf']), "\n",", ".join(extraIf),"\n",sep="")
     if not argDict['arUse']:
         flTemplate = io.StringIO(template)
     else:
@@ -539,7 +637,7 @@ def clonefile(src,dst):
 
 
 
-def traverse_site(arPath,arOutput,arInclude,arType):
+def traverse_site(arPath,arOutput,arInclude,arType,extraIf):
     """Traverse the directory structure of the site
 
     Parameters
@@ -613,9 +711,14 @@ def traverse_site(arPath,arOutput,arInclude,arType):
                 # ffname is the new name of the file when copied flat
                 ffname = os.path.join(arOutput, "data", fname)
                 # vname is the C/C++ variable name (const char) with the content of the file
-                vname = name
+                vname = name.replace('-','_').replace('(','_').replace(')','_')
                 if vname[0].isnumeric():
                     vname = "p" + name
+                nm = vname.lower().split('_')
+                vname = ""
+                for n in nm:
+                    vname += n.capitalize()
+                extraIf.append(vname)
                 # finame is name of include file containing the variable vname definition
                 finame = name + ".h"
                 if not root:
@@ -646,7 +749,7 @@ def traverse_site(arPath,arOutput,arInclude,arType):
                 # 1- Main home page (public/index.html):
                 # name:   index_html 
                 # fname:  index.html  (flat file name)
-                # vname:  index_html  (const char var name)
+                # vname:  IndexHtml   (const char var name)
                 # finame: index_html.h           (header file name)
                 # ffname: output/data/index.html (flat path name) 
                 # cname:  output/data/index.html (clone path name) 
@@ -656,7 +759,7 @@ def traverse_site(arPath,arOutput,arInclude,arType):
                 # 2- Error page (public/404.html):
                 # name:   404_html 
                 # fname:  404.html  (flat file name)
-                # vname:  p404_html  (const char var name)
+                # vname:  P404Html  (const char var name)
                 # finame: 404_html.h           (header file name)
                 # ffname: output/data/404.html (flat path name) 
                 # cname:  output/data/404.html (clone path name) 
@@ -666,7 +769,7 @@ def traverse_site(arPath,arOutput,arInclude,arType):
                 # 3- Normal page (public/pages/sensors/index.html):
                 # name:   pages_sensors_html 
                 # fname:  pages_sensors.html  (flat file name)
-                # vname:  pages_sensors_html  (const char var name)
+                # vname:  PagesSensorsHtml    (const char var name)
                 # finame: pages_sensors_html.h           (header file name)
                 # ffname: output/data/pages_sensors.html (flat path name) 
                 # cname:  output/data/pages/sensors.html (clone path name) 
@@ -676,7 +779,7 @@ def traverse_site(arPath,arOutput,arInclude,arType):
                 # 4- Other files (public/css/style.css):
                 # name:   css_style_css 
                 # fname:  css_style.css  (flat file name)
-                # vname:  css_style_css  (const char var name)
+                # vname:  CssStyleCss    (const char var name)
                 # finame: css_style_css.h           (header file name)
                 # ffname: output/data/css_style.css (flat path name) 
                 # cname:  output/data/css/style.css (clone path name) 
@@ -698,7 +801,7 @@ def traverse_site(arPath,arOutput,arInclude,arType):
 
 
 def arguments() :
-    print("Usage:\n ",sys.argv[0]," [flags]\n\nFlags:")
+    print("Usage:\n ",os.path.basename(sys.argv[0])," [flags]\n\nFlags:")
     print("   -d, --default         Use default folder paths (public and output)")
     print("   -h, --help            Prints this help")
     print("   -i, --include <file>  Generates a single header that combines all the files")
@@ -706,7 +809,7 @@ def arguments() :
     print("   -p, --path    <path>  Folder path of the site to be converted")
     print("   -t, --type    <type>  type of output to be generated (default to f)")
     print("   -u, --use     <file>  Use this file as the generation template")
-    print("       --if      <list>  list separated by commas of template sections")
+    print("       --if      <list>  list separated by commas of alphanumeric identifiers")
     print("   -w, --write   <file>  Write the internal generation template into file")
     print("   -v, --verbose         Produces verbose stdout ourput")
     print("\nGeneration types:")
@@ -771,6 +874,7 @@ def main(argv):
       elif opt == "": 
           arguments()
 
+
    # Let now check that this makes sense
    if (not arWrite) and ((not arPath) or (not arOutput) or (not arType) or (nargs == 0)):
        arguments()
@@ -808,13 +912,27 @@ def main(argv):
            while('' in arIf):
                arIf.remove('')
 
+       # Check that arIf contains valid identifiers
+       if ('NOT' in arIf) or ('OR' in arIf) or ('AND' in arIf):
+           error("Boolean operators (AND, OR, NOT) not allow in --if list")
+           sys.exit(2)
+       if ('VARIABLES' in arIf) or ('FILES' in arIf):
+           error("Keywords (FILES, VARIABLES) not allow in --if list")
+           sys.exit(2)
+       for i in arIf:
+           if not i.isalnum():
+               error("Non alphanumeric entry on --if list:'",i,"'",sep="")
+               sys.exit(2)
+
+       if len(arIf) > 0:
+           extra += "\n    Defining '" + ','.join(arIf) + "' as template conditionals"
+
+       # These were not defined by the user, so don't print here
+       extraIf = []
        if arType in ['f', 'c']:
            arIf.append('FILES')
        elif arType in ['s', 'm']:
            arIf.append('VARIABLES')
-
-       if len(arIf) > 0:
-           extra += "\n    Defining '" + ','.join(arIf) + "' as template conditionals"
 
        print("Proceeding as follows:\n    Input folder:",arPath,"\n    Output folder:",arOutput,
                "\n    Generation type:",g,extra,"\n")
@@ -835,9 +953,9 @@ def main(argv):
        # argDict['arIf']: list
        #     List of tokens to use in if statements
        #################################################################################
-       generate({'lst' : traverse_site(arPath,arOutput,arInclude,arType), 'arPath' : arPath, 
+       generate({'lst' : traverse_site(arPath,arOutput,arInclude,arType,extraIf), 'arPath' : arPath, 
            'arOutput' : arOutput, 'arWrite' : arWrite, 'arOutput' : arOutput, 
-           'arInclude' : arInclude, 'arType' : arType, 'arUse' :arUse, 'arIf' : arIf})
+           'arInclude' : arInclude, 'arType' : arType, 'arUse' :arUse, 'arIf' : arIf},extraIf)
 
    print("done")
 

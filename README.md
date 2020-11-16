@@ -21,76 +21,80 @@ The features of this program include:
 ## Program execution
 
 ### NAME
-<pre>
+
     **ss2em** - transforms a static web site into an embedded web site
-</pre>
+
 
 ### SYNOPSIS
-<pre>
+
     **ss2em** [*flags*]
-</pre>
+
 
 ### DESCRIPTION
-<pre>
+
     **ss2em** converts an static site into an embedded web site to be hosted in a micro-controller.
 It transforms the site pages into an easy to embed format and generates a sample hosting application based on a template.
-</pre>
+
 ### OPTIONS
-**Flags:** &nbsp;
-&emsp;  **-d**, **--default**
-: Use default folder paths (public and output)
+**Flags:**
+
+  **-d**, **--default**
+ Use default folder paths (public and output)
 
 &nbsp;  **-h**, **--help**
-: Prints this help
+ Prints this help
 
   **-i**, **--include** <file\>
-: Generates a single header that combines all the files
+ Generates a single header that combines all the files
 
   **-o**, **--output**  <path\>
-: Output folder path
+ Output folder path
 
   **-p**, **--path**    <path\>
-: Folder path of the site to be converted
+ Folder path of the site to be converted
 
   **-t**, **--type**    <type\>
-: type of output to be generated (default to f). See description below on **Generation types**
+ type of output to be generated (default to f). See description below on **Generation types**
 
   **-u**, **--use**     <file\>
-: Use this file as the generation template
+ Use this file as the generation template
 
   **--if**      <list\>
-: list separated by commas of template sections
+ list separated by commas of alphanumeric identifiers 
 
   **-w**, **--write**   <file\>
-: Write the internal generation template into file
+ Write the internal generation template into file
 
   **-v**, **--verbose**
-: Produces verbose stdout ourput
+ Produces verbose stdout ourput
 
 
 **Generation types:**
 
-  **m** &emsp; Site files are embedded into header files as 'const char'.  By default multiple header files will be generated, but using '--include <name\>' forces a single include file named <name\>.
+  **m**  Site files are embedded into header files as 'const char'.  By default multiple header files will be generated, but using '--include <name\>' forces a single include file named <name\>.
 Adds `VARIABLES` to the `--if` flag. 
 
-  **f** &nbsp;  Copy the site files into the output path and rename them to flatten the folder structure into a single folder. Useful when hosting the site into a SPIFFS partition.
+  **f**   Copy the site files into the output path and rename them to flatten the folder structure into a single folder. Useful when hosting the site into a SPIFFS partition.
 Adds `FILES` to the `--if` flag.
 
-  **c** : Copy the site files into the output path maintaining the folder
+  **c**  Copy the site files into the output path maintaining the folder
       structure. Useful when hosting into a FAT or hierarchical partition.
 Adds `FILES` to the `--if` flag.
 
 ### EXAMPLES
 **ss2em** -w template.txt
-: Writes out to template.txt the internal template. This is useful to understand and modify the internal template
+
+: Writes out to template.xt the internal template. This is useful to understand and modify the internal template
 
 **ss2em** -u template.txt -if OTA,BETA -type m -p public -o web
-: transform the files in the public folder and generates the output in the web folder.
+
+ transform the files in the public folder and generates the output in the web folder.
 The files are encoded into header files.
 Uses template.txt (instead of the internal template) and define the OTA and BETA Boolean used in the template.txt for conditional generation.
 
 **ss2em** -d
-: transform the files in the public folder and generates the output in an output folder.
+
+ transform the files in the public folder and generates the output in an output folder.
 The files are flatten in the output folder.
 
 ### AUTHOR
@@ -105,6 +109,9 @@ A template is a source file with embedded commands.
 When those commands are expanded by ss2em, the source file should compiler.
 For example, the internal template is a valid C/C++ file (with some ss2em commands).
 After processing it with ss2em, you should be able to compile the generated file with the Arduino IDE and load it into a ESP32.
+
+Note, when creating a template you should double scape any scaped character inside a C/C++ string.
+For example: `"this is a two\nlines string"` must be written as `"this is a two\\nlines string"` (with two backslashes instead of one.)
 
 ### Template language
 There are two types of embedded directives:
@@ -129,18 +136,25 @@ Each expansion of the `:::for` block will have the set of variables (`[:::HtmlPa
 Expanding those variables you can customize the generated code.
 
 ##### :::if
-The `:::if` statement must end in a `:::fi`.
+The `:::if` block must end in a `:::fi`.
 The block of source code enclosed in between the `:::if` and the `:::fi` will be conditionally included in the output text.
+The `:::if` statement test for a Boolean condition composed of identifiers and Boolean operators. 
+The valid Boolean operators are `AND`, `OR`, `NOT` and round parenthesis (`(` and `)`).
+Note that Boolean operators must be in upper case.
 
-The `:::if` statement test for a Boolean value that can be an internal generated value or an argument to **ss2em** using the `--if` flag.
-The `:::if` condition only test for existence on the `--if' flag list.
+The identifiers in the `:::if` condition are:
 
-The internally generated Booleans are
+- identifiers defined by the `--if` flag, which are treated as true 
+- internal generated identifiers that are also considered true
+- Any other identifier that are consider false
+
+The internally generated identifiers are,
  
 Value | Description
 ------|------------
-VARIABLES | True when `--type` flag is either `'f'` or `'c'`, otherwise False.
-FILES | True when `--type` flag is `'m'`, otherwise False.
+VARIABLES | Defined when `--type` flag is either `'f'` or `'c'`, otherwise False.
+FILES | Defined when `--type` flag is `'m'`, otherwise False.
+<name\> | Defined equal to [:::Name:::] inside a :::for block for the file being processed.
 
 #### Expansion directives or variables
 
