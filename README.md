@@ -41,28 +41,28 @@ It transforms the site pages into an easy to embed format and generates a sample
   **-d**, **--default**
  Use default folder paths (public and output)
 
-&nbsp;  **-h**, **--help**
+  **-h**, **--help**
  Prints this help
 
-  **-i**, **--include** <file\>
+  **-i**, **--include** `<file>`
  Generates a single header that combines all the files
 
-  **-o**, **--output**  <path\>
+  **-o**, **--output**  `<path>`
  Output folder path
 
-  **-p**, **--path**    <path\>
+  **-p**, **--path**    `<path>`
  Folder path of the site to be converted
 
-  **-t**, **--type**    <type\>
+  **-t**, **--type**    `<type>`
  type of output to be generated (default to f). See description below on **Generation types**
 
-  **-u**, **--use**     <file\>
+  **-u**, **--use**     `<file>`
  Use this file as the generation template
 
-  **--if**      <list\>
+  **--if**      `<list>`
  list separated by commas of alphanumeric identifiers 
 
-  **-w**, **--write**   <file\>
+  **-w**, **--write**   `<file>`
  Write the internal generation template into file
 
   **-v**, **--verbose**
@@ -71,7 +71,7 @@ It transforms the site pages into an easy to embed format and generates a sample
 
 **Generation types:**
 
-  **m**  Site files are embedded into header files as 'const char'.  By default multiple header files will be generated, but using '--include <name\>' forces a single include file named <name\>.
+  **m**  Site files are embedded into header files as 'const char'.  By default multiple header files will be generated, but using `--include <name>` forces a single include file named `<name>`.
 Adds `VARIABLES` to the `--if` flag. 
 
   **f**   Copy the site files into the output path and rename them to flatten the folder structure into a single folder. Useful when hosting the site into a SPIFFS partition.
@@ -118,8 +118,8 @@ There are two types of embedded directives:
 
 - Expansion directives or variables. 
 These are tokens that are expanded in the output text when encounter.
-They can appear anywhere in the text and have the form `[:::<variable\>:::]` (start with a square bracket followed by three colons, the variable name followed by another three colons and a close square bracket.)
-- Statements. These commands are executed and expanded in the output text. They can only appear at the start of a new line and have the form `:::<command\>` (start the line with three colons followed by the command.)
+They can appear anywhere in the text and have the form `[:::<variable>:::]` (start with a square bracket followed by three colons, the variable name followed by another three colons and a close square bracket.)
+- Statements. These commands are executed and expanded in the output text. They can only appear at the start of a new line and have the form `:::<command>` (start the line with three colons followed by the command.)
 The rest of the line is ignored.
 
 #### Statements
@@ -127,7 +127,7 @@ Statements can be nested.
 The statements supported are:
 ##### :::include
 It will generate in the output text one or more C pre-processor #include statements. 
-These statements are only needed (and will only be generated) when the flag `--type` was set to `f`, indicating that no file storage should be used, but instead the files should be encodded into one or more header files.
+These statements are only needed (and will only be generated) when the flag `--type` was set to `f`, indicating that no file storage should be used, but instead the files should be encoded into one or more header files.
  
 ##### :::for
 The `:::for` statement must end on a `:::end`.
@@ -135,7 +135,7 @@ The block of source code enclosed in between the `:::for` and the `:::end` will 
 Each expansion of the `:::for` block will have the set of variables (`[:::HtmlPath:::], `[`:::MIME:::]`, `[:::Name:::]`, and `[:::Page:::]`) that corresponds to the file being processed.
 Expanding those variables you can customize the generated code.
 
-##### :::if
+##### :::if `<condition>`
 The `:::if` block must end in a `:::fi`.
 The block of source code enclosed in between the `:::if` and the `:::fi` will be conditionally included in the output text.
 The `:::if` statement test for a Boolean condition composed of identifiers and Boolean operators. 
@@ -154,7 +154,12 @@ Value | Description
 ------|------------
 VARIABLES | Defined when `--type` flag is either `'f'` or `'c'`, otherwise False.
 FILES | Defined when `--type` flag is `'m'`, otherwise False.
-<name\> | Defined equal to [:::Name:::] inside a :::for block for the file being processed.
+`<name>` | Defined equal to [:::Name:::] inside a :::for block for the file being processed.
+
+##### :::# <comment>
+Lines starting with `:::#` are considered comments and are removed from the output.
+In most cases, you want to write comments in the host language (language in which the template was written), so these comments are exposed in the resulting output.
+However, in some cases, you may want to comment on the generation statements (`:::<statement>`) or variables `[:::<name>:::]` 
 
 #### Expansion directives or variables
 

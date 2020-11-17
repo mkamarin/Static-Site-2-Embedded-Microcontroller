@@ -105,10 +105,11 @@ void setup()
   Serial.printf("Connected to: %s\\n IP address: %s\\n Host name:  %s\\n",
       ssid, IP.c_str(), WiFi.getHostname());
 
-:::for files  
+:::for 
 :::if NOT P404Html
   server.on("[:::HtmlPath:::]", HTTP_GET, &get[:::Name:::]); 
 :::fi
+:::# This due to lack of else block
 :::if P404Html
   server.onNotFound(&get[:::Name:::]); 
 :::fi
@@ -405,14 +406,16 @@ def execute(line, flTemplate, flOutput, argDict, frame):
         vares = argDict['arIf'].copy()
         if frame:
             vares.append(frame['vname'])
-        vbprint("Processing :::if with vars",vares,"and tokens",tokens)
+        vbprint("Processing :::if with vars",vares,"and tokens",tokens,":",line)
         if evalif(tokens[1:],vares):
             execif(line, flTemplate, flOutput, argDict, frame)
         else:
             skipif(line, flTemplate, flOutput, argDict, frame)
     elif tokens[0] == ":::for":
-        vbprint("Processing FOR")
+        vbprint("Processing FOR:",line)
         execfor(line, flTemplate, flOutput, argDict)
+    elif tokens[0] == ":::#":
+        vbprint("Processing COMMENT:",line)
 
 
 def add_header(fl, fn):
