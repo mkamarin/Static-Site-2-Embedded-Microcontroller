@@ -447,29 +447,33 @@ def generate(argDict,extraIf):
     Nothing
     """
 
-    fnName = os.path.join(argDict['arOutput'], argDict['arOutput'] + ".ino")
-    vbprint("\nGENERATION phase (into '", fnName,"')",sep="")
-    print("Full set of defined variables: ", ', '.join(argDict['arIf']), "\n",", ".join(extraIf),"\n",sep="")
-    if not argDict['arUse']:
-        flTemplate = io.StringIO(template)
-    else:
-        flTemplate = open(argDict['arUse'], 'r')
-
-    flOutput = open(fnName, 'w')
-    add_header(flOutput, fnName)
-
-    # Process template
-    while True:
-        line = flTemplate.readline()
-        if not line:
-            break
-
-        if line.startswith(":::"):
-            execute(line, flTemplate, flOutput, argDict, {})
+    try:
+        fnName = os.path.join(argDict['arOutput'], argDict['arOutput'] + ".ino")
+        vbprint("\nGENERATION phase (into '", fnName,"')",sep="")
+        print("Full set of defined variables: ", ', '.join(argDict['arIf']), "\n",", ".join(extraIf),"\n",sep="")
+        if not argDict['arUse']:
+            flTemplate = io.StringIO(template)
         else:
-            flOutput.write(genline(line, {}, argDict))
+            flTemplate = open(argDict['arUse'], 'rt')
 
-    flOutput.close()
+        flOutput = open(fnName, 'wt')
+        add_header(flOutput, fnName)
+
+        # Process template
+        while True:
+            line = flTemplate.readline()
+            if not line:
+                break
+
+            if line.startswith(":::"):
+                execute(line, flTemplate, flOutput, argDict, {})
+            else:
+                flOutput.write(genline(line, {}, argDict))
+
+        flOutput.close()
+
+    except OSError as e:
+        error(e, " while generating",fnName)
 
 
 def writetemplate(arWrite):
@@ -485,9 +489,13 @@ def writetemplate(arWrite):
     Nothing
     """
 
-    flWrite = open(arWrite, 'w')
-    flWrite.write(template)
-    flWrite.close()
+    try:
+        flWrite = open(arWrite, 'w')
+        flWrite.write(template)
+        flWrite.close()
+
+    except OSError as e:
+        error(e, " while writing out the internal template")
 
 
 def append2header(src, flSingleHeader, var, mime):
@@ -507,34 +515,37 @@ def append2header(src, flSingleHeader, var, mime):
     Nothing
     """
 
-
-    mm = mime.split('/')
-    if mm[0] == "text" or mime == "application/javascript":
-        fText = True
-        bsize = 4096 # Read 4k blocks
-        flSrc = open(src, 'rt')
-        flSingleHeader.write("\n\nconst char " + var + "[] PROGMEM = R\"=====(\n")
-    else:
-        fText = False
-        bsize = 32 # Read only 32 bytes to simplify printing
-        flSrc = open(src, 'rb')
-        flSingleHeader.write("\n\nconst uint8_t " + var + "[] PROGMEM = R{\n")
-
-
-    while True:
-        block = flSrc.read(bsize) # Just 4k blocks
-        if not block:
-            break
-        if fText:
-            flSingleHeader.write(block)
+    try:
+        mm = mime.split('/')
+        if mm[0] == "text" or mime == "application/javascript":
+            fText = True
+            bsize = 4096 # Read 4k blocks
+            flSrc = open(src, 'rt')
+            flSingleHeader.write("\n\nconst char " + var + "[] PROGMEM = R\"=====(\n")
         else:
-            flSingleHeader.write(','.join('0x{:02X}'.format(b) for b in block) + ',\n')
+            fText = False
+            bsize = 32 # Read only 32 bytes to simplify printing
+            flSrc = open(src, 'rb')
+            flSingleHeader.write("\n\nconst uint8_t " + var + "[] PROGMEM = R{\n")
 
-    if fText:
-        flSingleHeader.write("\n)=====\";\n")
-    else:
-        flSingleHeader.write("};\n")
-    flSrc.close()
+
+        while True:
+            block = flSrc.read(bsize) # Just 4k blocks
+            if not block:
+                break
+            if fText:
+                flSingleHeader.write(block)
+            else:
+                flSingleHeader.write(','.join('0x{:02X}'.format(b) for b in block) + ',\n')
+
+        if fText:
+            flSingleHeader.write("\n)=====\";\n")
+        else:
+            flSingleHeader.write("};\n")
+        flSrc.close()
+
+    except OSError as e:
+        error(e, " while processing ", src," :",mime)
 
 
 def copy2header(src, dst, var, mime):
@@ -554,39 +565,43 @@ def copy2header(src, dst, var, mime):
     Nothing
     """
 
-    flDst = open(dst, 'wt')
-    flDst.write("#ifndef " + var.upper() + "\n#define " + var.upper())
-    add_header(flDst, dst)
+    try:
+        flDst = open(dst, 'wt')
+        flDst.write("#ifndef " + var.upper() + "\n#define " + var.upper())
+        add_header(flDst, dst)
 
-    mm = mime.split('/')
-    if mm[0] == "text" or mime == "application/javascript":
-        fText = True
-        bsize = 4096 # Read 4k blocks
-        flSrc = open(src, 'rt')
-        flDst.write("\n\nconst char " + var + "[] PROGMEM = R\"=====(\n")
-    else:
-        fText = False
-        bsize = 32 # Read only 32 bytes to simplify printing
-        flSrc = open(src, 'rb')
-        flSrc.write("\n\nconst uint8_t " + var + "[] PROGMEM = R{\n")
-
-
-    while True:
-        block = flSrc.read(bsize) # Just 4k blocks
-        if not block:
-            break
-        if fText:
-            flDst.write(block)
+        mm = mime.split('/')
+        if mm[0] == "text" or mime == "application/javascript":
+            fText = True
+            bsize = 4096 # Read 4k blocks
+            flSrc = open(src, 'rt')
+            flDst.write("\n\nconst char " + var + "[] PROGMEM = R\"=====(\n")
         else:
-            flDst.write(','.join('0x{:02X}'.format(b) for b in block) + ',\n')
+            fText = False
+            bsize = 32 # Read only 32 bytes to simplify printing
+            flSrc = open(src, 'rb')
+            flDst.write("\n\nconst uint8_t " + var + "[] PROGMEM = R{\n")
 
-    if fText:
-        flDst.write("\n)=====\";\n\n#endif\n")
-    else:
-        flDst.write("};\n\n#endif\n")
 
-    flSrc.close()
-    flDst.close()
+        while True:
+            block = flSrc.read(bsize) # Just 4k blocks
+            if not block:
+                break
+            if fText:
+                flDst.write(block)
+            else:
+                flDst.write(','.join('0x{:02X}'.format(b) for b in block) + ',\n')
+
+        if fText:
+            flDst.write("\n)=====\";\n\n#endif\n")
+        else:
+            flDst.write("};\n\n#endif\n")
+
+        flSrc.close()
+        flDst.close()
+
+    except OSError as e:
+        error(e, " while processing files", src,"=>",dst," :",mime)
 
 
 def copyflat(src,dst):
@@ -604,15 +619,19 @@ def copyflat(src,dst):
     Nothing
     """
 
-    flSrc = open(src, 'rb')
-    flDst = open(dst, 'wb')
-    while True:
-        block = flSrc.read(4096) # Just 4k blocks
-        if not block:
-            break
-        flDst.write(block)
-    flSrc.close()
-    flDst.close()
+    try:
+        flSrc = open(src, 'rb')
+        flDst = open(dst, 'wb')
+        while True:
+            block = flSrc.read(4096) # Just 4k blocks
+            if not block:
+                break
+            flDst.write(block)
+        flSrc.close()
+        flDst.close()
+
+    except OSError as e:
+        error(e, " while processing files", src,"=>",dst)
 
 
 def clonefile(src,dst):
@@ -711,7 +730,7 @@ def traverse_site(arPath,arOutput,arInclude,arType,extraIf):
                 # ffname is the new name of the file when copied flat
                 ffname = os.path.join(arOutput, "data", fname)
                 # vname is the C/C++ variable name (const char) with the content of the file
-                vname = name.replace('-','_').replace('(','_').replace(')','_')
+                vname = re.sub(r'[^0-9a-zA-Z_]+', '_', name)
                 if vname[0].isnumeric():
                     vname = "p" + name
                 nm = vname.lower().split('_')
@@ -789,8 +808,8 @@ def traverse_site(arPath,arOutput,arInclude,arType,extraIf):
                 codelist.append({'vname' : vname, 'ffname': ffname, 'finame' : finame, 'cname' : cname, 
                     'mime' : mime, 'html' : html})
 
-            except OSError:
-                error("Error while processing file", filename)
+            except OSError as e:
+                error(e," while processing file", filename)
 
     if arType == "s":
         flSingleHeader.write("\n#endif\n")
