@@ -1,0 +1,64 @@
+
+This is just a test template not expected to be compiled in any programming language.
+This is only intended to test the different capabilities of ss2em.py and to detect regressions when the code is modified
+It will use the variables ALPHA, beta, Gamma for :::if statements
+So, here we go:
+
+:::# This is a comment and should be ignored
+ * Program arguments:
+ * Path='[:::Path:::]'
+ * Output='[:::Output:::]'
+ * Use='[:::Use:::]'
+ * Write='[:::Write:::]'
+ * Include='[:::Include:::]'
+ * If='[:::If:::]'
+ * Type='[:::Type:::]'
+
+Let do includes:
+:::include
+Line after the includes
+
+:::if (ALPHA AND NOT DELTA) AND beta
+Inside :::if (ALPHA AND NOT DELTA) AND beta
+Now let try another :::if
+:::if ALPHA
+Inside :::if ALPHA
+Let do a :::for
+:::for
+inside :::for loop  for: html path: [:::HtmlPath:::], name: [:::Name:::], mime: [:::MIME:::], and page: [:::Page:::]
+let :::if again
+:::if NOT delta OR Gamma
+Inside :::if not delta OR Gamma
+let do an :::if DELTA OR delta
+:::if DELTA OR delta
+Should not be here
+:::fi
+Now :::fi
+:::fi
+Let finish the :::for
+:::end
+
+Let try another :::for
+:::for
+Inside second for
+let try an embedded :::for
+:::for
+Inside the embedded :::for
+Let :::if with a file name (P404Html):
+:::if P404Html
+
+inside :::if P404Html([:::HtmlPath:::], [:::Name:::], [:::MIME:::], [:::Page:::])
+:::fi
+Let exit the embedded :::for
+:::end
+
+Still inside the first :::for
+Now let exit it
+:::end
+End an :::fi
+:::fi
+End an :::fi
+:::fi
+
+End of File
+
