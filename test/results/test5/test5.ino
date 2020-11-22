@@ -54,19 +54,19 @@ Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/spi  ffs/, name: PagesSpiFfsHtml, mime: text/html, and page: PagesSpiFfsHtml
+inside :::for loop  for: html path: /pages/spi-ffs/, name: PagesSpiFfsHtml, mime: text/html, and page: PagesSpiFfsHtml
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/spi  ffs/mike.html, name: PagesSpiFfsMikeHtml, mime: text/html, and page: PagesSpiFfsMikeHtml
+inside :::for loop  for: html path: /pages/spi-ffs/mike.html, name: PagesSpiFfsMikeHtml, mime: text/html, and page: PagesSpiFfsMikeHtml
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/spi  ffs/mike (copy).html, name: PagesSpiFfsMikeCopyHtml, mime: text/html, and page: PagesSpiFfsMikeCopyHtml
+inside :::for loop  for: html path: /pages/spi-ffs/mike (copy).html, name: PagesSpiFfsMikeCopyHtml, mime: text/html, and page: PagesSpiFfsMikeCopyHtml
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta

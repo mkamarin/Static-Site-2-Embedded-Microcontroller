@@ -17,17 +17,17 @@ So, here we go:
  * Type='m'
 
 Let do includes:
-#include "index_html.h"
-#include "404_html.h"
-#include "favicon_16x16_png.h"
-#include "pages_mi_ke_html.h"
-#include "pages_fat_html.h"
-#include "pages_spi_ffs_html.h"
-#include "pages_spi_ffs_mike_html.h"
-#include "pages_spi_ffs_mike_copy__html.h"
-#include "css_style_css.h"
-#include "js_navbutton_js.h"
-#include "about_html.h"
+#include "index-html.h"
+#include "404-html.h"
+#include "favicon-16x16-png.h"
+#include "pages-mi-ke-html.h"
+#include "pages-fat-html.h"
+#include "pages-spi-ffs-html.h"
+#include "pages-spi-ffs-mike-html.h"
+#include "pages-spi-ffs-mike-copy-html.h"
+#include "css-style-css.h"
+#include "js-navbutton-js.h"
+#include "about-html.h"
 Line after the includes
 
 Inside :::if (ALPHA AND NOT DELTA) AND beta
@@ -64,19 +64,19 @@ Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/spi  ffs/, name: PagesSpiFfsHtml, mime: text/html, and page: PagesSpiFfsHtml
+inside :::for loop  for: html path: /pages/spi-ffs/, name: PagesSpiFfsHtml, mime: text/html, and page: PagesSpiFfsHtml
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/spi  ffs/mike.html, name: PagesSpiFfsMikeHtml, mime: text/html, and page: PagesSpiFfsMikeHtml
+inside :::for loop  for: html path: /pages/spi-ffs/mike.html, name: PagesSpiFfsMikeHtml, mime: text/html, and page: PagesSpiFfsMikeHtml
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/spi  ffs/mike (copy).html, name: PagesSpiFfsMikeCopyHtml, mime: text/html, and page: PagesSpiFfsMikeCopyHtml
+inside :::for loop  for: html path: /pages/spi-ffs/mike (copy).html, name: PagesSpiFfsMikeCopyHtml, mime: text/html, and page: PagesSpiFfsMikeCopyHtml
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta

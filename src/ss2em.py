@@ -22,7 +22,8 @@ def vbprint(*args, **kwargs):
         print(*args, **kwargs)
 
 def error(*args, **kwargs):
-    print("ERROR (line:",inspect.currentframe().f_back.f_lineno,")",*args, **kwargs, sep="", file = sys.stderr)
+    print("ERROR (:",os.path.basename(sys.argv[0]),":",inspect.currentframe().f_back.f_lineno,")",
+            *args, **kwargs, sep="", file = sys.stderr)
 
 # This is internal template that guides the generation of the sample code
 template = '''
@@ -126,6 +127,70 @@ void loop()
 #endif
 }
 '''
+
+def clean_name(name):
+    """Clean a directory or folder name by removing special characters
+
+    Parameters
+    ----------
+    name: str
+        file name
+
+    Returns
+    -------
+    str
+    """
+
+    k = name.rfind(os.sep)
+    if k < 0:
+        pth = ""
+        nm = name
+    else:
+        nm = name[k+1:]
+        pth = name[:k] + os.sep
+
+    k = nm.rfind(".")
+    if k < 0:
+        ext = ""
+        rest = re.sub(r'[^0-9a-zA-Z-]+', '-', nm)
+    else:
+        ext = "." + nm[k+1:]
+        rest = re.sub(r'[^0-9a-zA-Z-]+', '-', nm[:k])
+
+    if rest.endswith('-'):
+        rest = rest[:-1]
+
+    return pth + rest + ext 
+
+
+def clean_dir(folder):
+    """Clean a directory or folder name by removing special characters
+
+    Parameters
+    ----------
+    folder: str
+        directory or folder name
+
+    Returns
+    -------
+    str
+    """
+
+    out = folder.split(os.sep)
+    while('' in out):
+        out.remove('')
+    ret = []    
+    for e in out:
+        ret.append(re.sub(r'[^0-9a-zA-Z-]+', '-', e))
+
+    rtrn = ""
+    if folder and folder[0] == os.sep:
+        rtrn = os.sep + os.sep.join(ret)
+    elif folder:
+        rtrn = os.sep.join(ret)
+
+    return rtrn
+
 
 def do_cmd(cmd, frame, argDict):
     """Process a command from a frame
@@ -731,7 +796,7 @@ def traverse_site(arPath,arOutput,arInclude,arType,extraIf):
                 count += 1
                 vbprint("SUBDirs=",subdirs,"rootDir=",rootDir,"fullName=",fullName,"filename=",filename)
                 # root is the original path without the site folder arPath
-                root = rootDir.replace(arPath,"",1)
+                root = clean_dir(rootDir.replace(arPath,"",1))
                 if filename == "index.html":
                     name  = root.replace(os.sep,"_") + "_html"
                     cname = root + ".html"
@@ -746,11 +811,11 @@ def traverse_site(arPath,arOutput,arInclude,arType,extraIf):
                     cname = cname[1:]
                 html = "/" + cname
                 # cname is the name of the cloned file into a new directory structure
-                cname = os.path.join(arOutput,"data",cname)
+                cname = os.path.join(arOutput,"data",clean_name(cname))
                 name = name.replace(".","_")
                 k = name.rfind("_")
                 # fname is the filename with extension
-                fname = name[:k] + "." + name[k+1:]
+                fname = clean_name(name[:k] + "." + name[k+1:])
                 # ffname is the new name of the file when copied flat
                 ffname = os.path.join(arOutput, "data", fname)
                 # vname is the C/C++ variable name (const char) with the content of the file
@@ -763,7 +828,7 @@ def traverse_site(arPath,arOutput,arInclude,arType,extraIf):
                     vname += n.capitalize()
                 extraIf.append(vname)
                 # finame is name of include file containing the variable vname definition
-                finame = re.sub(r'[^0-9a-zA-Z_]+', '_', name) + ".h"
+                finame = clean_name(re.sub(r'[^0-9a-zA-Z_]+', '_', name) + ".h")
                 if not root:
                     root = "/"
                     if nme == "index":
@@ -897,7 +962,7 @@ def main(argv):
          arPath = arg
          fPathp =True 
       elif opt in ("-o", "--output"):
-         arOutput = arg
+         arOutput = clean_dir(arg)
          fPatho = True
       elif opt in ("-u", "--use"):
          arUse = arg
@@ -928,7 +993,7 @@ def main(argv):
    if len(arWrite) > 0:
        writetemplate(arWrite)
 
-   if not ((not arPath) or (not arOutput) or (not arType)):
+   if arPath and  arOutput and arType:
        if arType == "c":
            g = "(c) copying folder structure"
        elif arType == "f":
@@ -944,6 +1009,7 @@ def main(argv):
            arguments()
 
        if (len(arInclude) > 0) and (arType != "s"):
+           print("Ignoring --include due to incompatible --type")
            arInclude = ""
 
        extra = ""

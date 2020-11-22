@@ -41,43 +41,43 @@ Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/mi ke.html, name: PagesMiKeHtml, mime: text/html, and page: out/test2/data/pages_mi ke.html
+inside :::for loop  for: html path: /pages/mi ke.html, name: PagesMiKeHtml, mime: text/html, and page: out/test2/data/pages-mi-ke.html
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/fat/, name: PagesFatHtml, mime: text/html, and page: out/test2/data/pages_fat.html
+inside :::for loop  for: html path: /pages/fat/, name: PagesFatHtml, mime: text/html, and page: out/test2/data/pages-fat.html
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/spi  ffs/, name: PagesSpiFfsHtml, mime: text/html, and page: out/test2/data/pages_spi  ffs.html
+inside :::for loop  for: html path: /pages/spi-ffs/, name: PagesSpiFfsHtml, mime: text/html, and page: out/test2/data/pages-spi-ffs.html
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/spi  ffs/mike.html, name: PagesSpiFfsMikeHtml, mime: text/html, and page: out/test2/data/pages_spi  ffs_mike.html
+inside :::for loop  for: html path: /pages/spi-ffs/mike.html, name: PagesSpiFfsMikeHtml, mime: text/html, and page: out/test2/data/pages-spi-ffs-mike.html
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /pages/spi  ffs/mike (copy).html, name: PagesSpiFfsMikeCopyHtml, mime: text/html, and page: out/test2/data/pages_spi  ffs_mike (copy).html
+inside :::for loop  for: html path: /pages/spi-ffs/mike (copy).html, name: PagesSpiFfsMikeCopyHtml, mime: text/html, and page: out/test2/data/pages-spi-ffs-mike-copy.html
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /css/style.css, name: CssStyleCss, mime: text/css, and page: out/test2/data/css_style.css
+inside :::for loop  for: html path: /css/style.css, name: CssStyleCss, mime: text/css, and page: out/test2/data/css-style.css
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
 Now :::fi
 Let finish the :::for
-inside :::for loop  for: html path: /js/navbutton.js, name: JsNavbuttonJs, mime: application/javascript, and page: out/test2/data/js_navbutton.js
+inside :::for loop  for: html path: /js/navbutton.js, name: JsNavbuttonJs, mime: application/javascript, and page: out/test2/data/js-navbutton.js
 let :::if again
 Inside :::if not delta OR Gamma
 let do an :::if DELTA OR delta
