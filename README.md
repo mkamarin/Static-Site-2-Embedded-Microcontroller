@@ -138,23 +138,25 @@ Expanding those variables you can customize the generated code.
 ##### :::if `<condition>`
 The `:::if` block must end in a `:::fi`.
 The block of source code enclosed in between the `:::if` and the `:::fi` will be conditionally included in the output text.
-The `:::if` statement test for a Boolean condition composed of identifiers and Boolean operators. 
+The `:::if` statement test for a Boolean condition composed of identifiers and Boolean operators.
 The valid Boolean operators are `AND`, `OR`, `NOT` and round parenthesis (`(` and `)`).
 Note that Boolean operators must be in upper case.
 
 The identifiers in the `:::if` condition are:
 
-- identifiers defined by the `--if` flag, which are treated as true 
-- internal generated identifiers that are also considered true
-- Any other identifier that are consider false
+- identifiers defined by the `--if` flag
+- internal generated identifiers
+
+An identifier is True if is defined (either by a `--if` argument or internally), otherwise the identifier is considered False.
 
 The internally generated identifiers are,
- 
+
 Value | Description
 ------|------------
-VARIABLES | Defined when `--type` flag is either `'f'` or `'c'`, otherwise False.
-FILES | Defined when `--type` flag is `'m'`, otherwise False.
-`<name>` | Defined equal to [:::Name:::] inside a :::for block for the file being processed.
+VARIABLES | True when `--type` flag is either `'f'` or `'c'`, otherwise False.
+FILES | True when `--type` flag is `'m'`, otherwise False.
+HTML | True when the `[:::MIME:::]` type of the file being processed in a `:::for` statement is html, otherwise False
+`<Name>` | True when `<Name>` equal to `[:::Name:::]` inside a `:::for` block for the file being processed, otherwise False.
 
 ##### :::# <comment>
 Lines starting with `:::#` are considered comments and are removed from the output.

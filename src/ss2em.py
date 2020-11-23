@@ -243,7 +243,7 @@ def nextline(flTemplate):
     """
     line = flTemplate.readline()
     if verbose:
-        print("[[[[",line[:-2],"]]]]")
+        print("[[[[",line[:-1],"]]]]")
     return line
 
 def genline(line, frame, argDict):
@@ -335,6 +335,7 @@ def execfor(line, flTemplate, flOutput, argDict):
             else:
                 flOutput.write(genline(line, e, argDict))
     flTemplate.seek(end)
+    vbprint("END FOR BLOCK")
 
 
 
@@ -359,7 +360,7 @@ def execif(line, flTemplate, flOutput, argDict,frame):
     Nothing
     """
 
-    vbprint("IF BLOCK")
+    vbprint("IF BLOCK (include)")
     while True:
         line = nextline(flTemplate)
         if not line:
@@ -367,6 +368,7 @@ def execif(line, flTemplate, flOutput, argDict,frame):
             break
 
         if line.startswith(":::fi"):
+            vbprint("END IF BLOCK (include)")
             return
         if line.startswith(":::"):
             execute(line, flTemplate, flOutput, argDict, frame)
@@ -396,7 +398,7 @@ def skipif(line, flTemplate, flOutput, argDict, frame):
     Nothing
     """
 
-    vbprint("SKIP IF BLOCK")
+    vbprint("IF BLOCK (skip)")
     while True:
         line = nextline(flTemplate)
         if not line:
@@ -406,6 +408,7 @@ def skipif(line, flTemplate, flOutput, argDict, frame):
         if line.startswith(":::if"):
             skipif(line, flTemplate, flOutput, argDict, frame)
         elif line.startswith(":::fi"):
+            vbprint("END IF BLOCK (skip)")
             return
 
 
@@ -489,16 +492,18 @@ def execute(line, flTemplate, flOutput, argDict, frame):
         vares = argDict['arIf'].copy()
         if frame:
             vares.append(frame['vname'])
-        vbprint("Processing :::if with vars",vares,"and tokens",tokens,":",line[:-2])
+            if frame['mime'] == 'text/html':
+                vares.append('HTML')
+        vbprint("Processing ", line[:-1], " => ",tokens, "\nTrue values: ",vares,sep="")
         if evalif(tokens[1:],vares):
             execif(line, flTemplate, flOutput, argDict, frame)
         else:
             skipif(line, flTemplate, flOutput, argDict, frame)
     elif tokens[0] == ":::for":
-        vbprint("Processing FOR:",line[:-2])
+        vbprint("Processing ",line[:-1])
         execfor(line, flTemplate, flOutput, argDict)
     elif tokens[0] == ":::#":
-        vbprint("Processing COMMENT:",line[:-2])
+        vbprint("Ignoring   ",line[:-1])
 
 
 def add_header(fl, fn):
@@ -1028,8 +1033,8 @@ def main(argv):
        if ('NOT' in arIf) or ('OR' in arIf) or ('AND' in arIf):
            error("Boolean operators (AND, OR, NOT) not allow in --if list")
            sys.exit(2)
-       if ('VARIABLES' in arIf) or ('FILES' in arIf):
-           error("Keywords (FILES, VARIABLES) not allow in --if list")
+       if ('VARIABLES' in arIf) or ('FILES' in arIf) or ('HTML' in arIf):
+           error("Keywords (FILES, VARIABLES, or HTML) not allow in --if list")
            sys.exit(2)
        for i in arIf:
            if not i.isalnum():
